@@ -30,7 +30,7 @@ $capsule->setAsGlobal();
 $capsule->bootEloquent();
 
 // Service factory for the ORM
-$container['db'] = function ($container) {
+$container['db'] = function ($container) use ($capsule) {
     return $capsule;
 };
 
