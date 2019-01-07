@@ -2,7 +2,7 @@
 
 ## Overview
 
-I have used this exercise as a way to learn around some of the tools and frameworks being used, and look into some of the options for APIs available. As such, it may be more complex than required, but please let me know if it is way off what was expected.
+I have used this exercise as a way to learn around some of the tools and frameworks being used, and look into some of the options for APIs available. 
 
 It uses a variety of tools, some familiar to me, some a bit familiar, and some much less so.
 
