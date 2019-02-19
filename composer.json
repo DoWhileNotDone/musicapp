@@ -11,7 +11,7 @@
     "authors": [
         {
             "name": "Dave Gillard",
-            "email": "20857652+davegthemighty@users.noreply.github.comm"
+            "email": "davegthemighty@hotmail.com"
         }
     ],
     "config": {
@@ -33,7 +33,7 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "MusicApp\\": "src/"
+            "MusicApp\\Test\\": "tests/"
         }
     },
     "require-dev": {

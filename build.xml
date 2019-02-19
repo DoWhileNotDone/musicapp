@@ -5,11 +5,12 @@
     <echo>The default is to output this message. Run ant -projecthelp to see other targets</echo>
   </target>
   <target name="development" depends="composer-install,dev-database,dev-environment" />
+  <target name="unit-testing" depends="dev-database,dev-environment" />
 
   <target name="composer-install">
     <!-- FIXME: Work out if there is a different way to chain arguments -->
     <exec executable="php">
-      <arg line="composer.phar install --no-suggest --no-progress"/>
+      <arg line="composer.phar install --no-suggest --no-progress --prefer-source --no-interaction"/>
     </exec>
   </target>
   <target name="dev-database" depends="dev-db-setup,dev-db-data" />

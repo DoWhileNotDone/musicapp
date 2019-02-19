@@ -3,3 +3,4 @@ vendor/
 .vagrant/
 archive/
 logs/*.log
+composer.phar
