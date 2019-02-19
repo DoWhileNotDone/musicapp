@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<project name="Music App Project" default="info">
+  <target name="info">
+    <echo>This is the build file for the music app - please select the target you need. </echo>
+    <echo>The default is to output this message. Run ant -projecthelp to see other targets</echo>
+  </target>
+  <target name="development" depends="composer-install,dev-database,dev-environment" />
+
+  <target name="composer-install">
+    <!-- FIXME: Work out if there is a different way to chain arguments -->
+    <exec executable="php">
+      <arg line="composer.phar install --no-suggest --no-progress"/>
+    </exec>
+  </target>
+  <target name="dev-database" depends="dev-db-setup,dev-db-data" />
+  <target name="dev-db-setup">
+    <!-- FIXME: Work out if there is a different way to chain arguments -->
+    <exec executable="psql">
+      <arg line="-c &quot;CREATE USER musicapp WITH ENCRYPTED PASSWORD 'musicapp'&quot;"  />
+    </exec>
+    <exec executable="psql">
+      <arg line="-c &quot;CREATE DATABASE musicapp_dev WITH OWNER = musicapp&quot;"  />
+    </exec>
+  </target>
+  <target name="dev-db-data">
+    <!-- Run the phinx development data scripts -->
+    <exec executable="vendor/bin/phinx">
+      <arg value="migrate"/>
+    </exec>
+    <exec executable="vendor/bin/phinx">
+      <arg value="seed:run"/>
+    </exec>
+  </target>
+  <target name="dev-environment" >
+    <!-- Copy the .env.development to .env -->
+    <copy file=".env.development" tofile=".env"/>
+  </target>
+</project>

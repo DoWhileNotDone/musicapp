@@ -1,5 +1,5 @@
 {
-    "name": "music-app",
+    "name": "davegthemighty/musicapp",
     "description": "Slim 3 API using Mololog, Eloquent and Basic Auth",
     "type": "project",
     "keywords": [
@@ -11,7 +11,7 @@
     "authors": [
         {
             "name": "Dave Gillard",
-            "email": "dgl_home@hotmail.com"
+            "email": "20857652+davegthemighty@users.noreply.github.comm"
         }
     ],
     "config": {
@@ -40,5 +40,9 @@
         "overtrue/phplint": "^1.0",
         "phpunit/phpunit": "^7.3",
         "squizlabs/php_codesniffer": "^3.2"
+    },
+    "scripts": {
+        "start": "php -S 0.0.0.0:8080 -t public",
+        "test": "phpunit"
     }
 }
