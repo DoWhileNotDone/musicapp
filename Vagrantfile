@@ -9,8 +9,6 @@ if !Vagrant::Util::Platform.windows?
   ")
 end
 
-
-
 VAGRANTFILE_API_VERSION = "2"
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
@@ -20,13 +18,34 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   end
 
   config.vm.box = "bento/ubuntu-18.04"
+
+  # https://www.vagrantup.com/docs/networking/public_network.html
+  # config.vm.network "public_network", use_dhcp_assigned_default_route: true, bridge: [
+  #   "en0: Wi-Fi (Wireless)",
+  #   "en5: USB Ethernet(?)",
+  # ]
+
   config.vm.network "private_network", ip: "192.168.50.52"
 
   # Update apt packages
   config.vm.provision "shell", name: "apt", inline: <<-SHELL
     export DEBIAN_FRONTEND=noninteractive
     apt-get update && apt-get upgrade
-    apt-get install -y wget unzip
+    packagelist=(
+      libssl1.0-dev
+      libreadline-dev
+      libyaml-dev
+      libxml2-dev
+      libxslt1-dev
+      libnss3
+      libx11-dev
+      software-properties-common
+      wget
+      unzip
+      curl
+      ant
+    )
+    apt-get install -y ${packagelist[@]}
   SHELL
 
   # Update apt source for postgresql
@@ -77,8 +96,36 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   SHELL
 
   # Install Composer
-  config.vm.provision "shell", name: "install composer", inline: <<-SHELL
+  config.vm.provision "shell", name: "install composer", privileged: false, inline: <<-SHELL
      cd /vagrant && curl -sS https://getcomposer.org/installer | php
+  SHELL
+
+  #Install node/nvm
+  config.vm.provision "shell", name: "install nvm and node", privileged: false, inline: <<-SHELL
+    export DEBIAN_FRONTEND=noninteractive
+    cd && curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.11/install.sh | bash
+    export NVM_DIR="$HOME/.nvm"
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+    [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+    nvm install node
+    nvm use node
+  SHELL
+
+  # Install Yarn
+  config.vm.provision "shell", name: "add yarn", inline: <<-SHELL
+
+    YN_REPO_APT_SOURCE=/etc/apt/sources.list.d/yarn.list
+    if [ ! -f "$YN_REPO_APT_SOURCE" ]
+    then
+      curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
+      echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
+    fi
+
+    # https://github.com/yarnpkg/yarn/issues/2821
+    apt-get purge -y cmdtest
+
+    apt-get update && apt-get install -y  --no-install-recommends yarn
+
   SHELL
 
   config.vm.provision "shell", name: "install postgres", inline: <<-SHELL
@@ -94,17 +141,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       postgresql-contrib
     )
 
-    apt-get install -y   ${pgpackagelist[@]}
+    apt-get install -y ${pgpackagelist[@]}
 
-  SHELL
-
-  config.vm.provision "shell", name: "configure postgres", inline: <<-SHELL
-    # FIXME: The following could be improved with some more learning on postgres
-    # https://gist.github.com/davisford/8000332
-    # https://gist.github.com/mrbongiolo/27e4166834bea1477f76
-    sudo -u postgres psql -c "CREATE USER vagrant WITH SUPERUSER CREATEDB ENCRYPTED PASSWORD 'vagrant'"
-    sudo -u postgres psql -c "CREATE USER musicapp WITH ENCRYPTED PASSWORD 'musicapp'"
-    sudo -u postgres psql -c "CREATE DATABASE musicapp_dev WITH OWNER = musicapp"
     # Make sure Postgres also runs after vagrant reload
     systemctl enable  postgresql
 
@@ -116,9 +154,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     # Symlink DocumentRoot o \Vagrant\Public
     ln -s /vagrant/public /var/www/html/DocumentRoot
 
-    #efault:   systemctl restart apache2
-    #    default: AH00112: Warning: DocumentRoot [/var/www/html/DocumentRoot] does not exist
-
     sed -i -e "s/DocumentRoot \/var\/www\/html/DocumentRoot \/var\/www\/html\/DocumentRoot/" /etc/apache2/sites-enabled/000-default.conf
     sed -i -e "s/AllowOverride None/AllowOverride All/" /etc/apache2/apache2.conf
 
@@ -128,19 +163,18 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     systemctl enable apache2
   SHELL
 
-  # Install project composer dependencies
-  config.vm.provision "shell", name: "run composer", inline: <<-SHELL
-    cd /vagrant && php composer.phar install --no-suggest --no-progress
+  config.vm.provision "shell", name: "configure postgres", inline: <<-SHELL
+    # FIXME: The following could be improved with some more learning on postgres
+    # https://gist.github.com/davisford/8000332
+    # https://gist.github.com/mrbongiolo/27e4166834bea1477f76
+    sudo -u postgres psql -c "CREATE USER vagrant WITH SUPERUSER CREATEDB ENCRYPTED PASSWORD 'vagrant'"
+    sudo -u postgres createdb vagrant
   SHELL
 
-  config.vm.provision "shell", name: "populate database", inline: <<-SHELL
-    cd /vagrant && vendor/bin/phinx migrate
-    cd /vagrant && vendor/bin/phinx seed:run
-  SHELL
-
-  # Use the provided example environment
-  config.vm.provision "shell", name: "environment", inline: <<-SHELL
-    cd /vagrant && cp .env.example .env
+  # Run Ant build for provisioning development
+  # FIXME: This isn't required as a Vagrant provision
+  config.vm.provision "shell", name: "run ant build script development target", privileged: false, inline: <<-'SHELL'
+    cd /vagrant && ant development
   SHELL
 
   config.vm.post_up_message = <<MESSAGE

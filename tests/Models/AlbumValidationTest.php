@@ -1,9 +1,10 @@
 <?php
 
-namespace MusicApp\Models;
+namespace MusicApp\Test\Models;
 
 use PHPUnit\Framework\TestCase;
 use Rakit\Validation\Validator;
+use MusicApp\Models\Album;
 
 class AlbumValidationTest extends TestCase
 {
