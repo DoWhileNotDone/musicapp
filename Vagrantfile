@@ -88,6 +88,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       php-mbstring
       php-pgsql
       php-pdo
+      php-gd
+      php-intl
+      php-xsl
       libapache2-mod-php
    )
 
@@ -95,9 +98,10 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
    apt-get install -y ${phppackagelist[@]}
   SHELL
 
-  # Install Composer
+  # Install Composer (Globally)
   config.vm.provision "shell", name: "install composer", privileged: false, inline: <<-SHELL
      cd /vagrant && curl -sS https://getcomposer.org/installer | php
+     sudo mv composer.phar /usr/local/bin/composer
   SHELL
 
   #Install node/nvm
